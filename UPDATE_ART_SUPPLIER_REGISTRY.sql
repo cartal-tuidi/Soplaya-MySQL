@@ -1,7 +1,7 @@
-drop procedure if exists crai.UPDATE_ART_SUPPLIER_REGISTRY;
+drop procedure if exists soplaya.UPDATE_ART_SUPPLIER_REGISTRY;
 
 create
-    definer = tuidiadmin@`%` procedure crai.UPDATE_ART_SUPPLIER_REGISTRY()
+    definer = tuidiadmin@`%` procedure soplaya.UPDATE_ART_SUPPLIER_REGISTRY()
 begin
 
 
@@ -9,8 +9,8 @@ begin
     Cancello tutti i record flaggati come da cancellare nel caricamento di oggi
      */
     delete old
-    from crai.art_supplier_registry old
-             inner join t_craicommon.art_supplier_registry new
+    from soplaya.art_supplier_registry old
+             inner join t_soplaya.art_supplier_registry new
                         on new.art_supplier_code = old.art_supplier_code
     where new.to_be_deleted = 1;
 
@@ -19,7 +19,7 @@ begin
 /*
 Inserisco le nuove istanze dei record esistenti
  */
-    insert into crai.art_supplier_registry (art_registry_id,
+    insert into soplaya.art_supplier_registry (art_registry_id,
                                             supplier_registry_id,
                                             art_supplier_code,
                                             external_art_code,
@@ -36,16 +36,16 @@ Inserisco le nuove istanze dei record esistenti
                   , asr.pack_layer        as pack_layer
                   , asr.pack_qty          as pack_qty
                   , pplr.flg_active       as flg_active
-    from t_craicommon.art_supplier_registry asr
-             inner join crai.art_registry art
+    from t_soplaya.art_supplier_registry asr
+             inner join soplaya.art_registry art
                         on art.art_code = asr.art_code
-             inner join crai.product p
+             inner join soplaya.product p
                         on art.id = p.art_registry_id
-             inner join crai.purchase_price_list_row pplr
+             inner join soplaya.purchase_price_list_row pplr
                         on p.id = pplr.product_id
-             inner join crai.purchase_price_list_header pplh
+             inner join soplaya.purchase_price_list_header pplh
                         on pplr.purchase_price_list_header_id = pplh.id
-             inner join crai.supplier_registry sr
+             inner join soplaya.supplier_registry sr
                         on sr.supplier_code = asr.supplier_code
                             and sr.id = pplh.supplier_registry_id
     where current_date between pplr.start_date and pplr.end_date

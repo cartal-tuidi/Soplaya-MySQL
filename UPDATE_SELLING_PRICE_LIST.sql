@@ -1,27 +1,27 @@
-drop procedure if exists crai.UPDATE_SELLING_PRICE_LIST;
+drop procedure if exists soplaya.UPDATE_SELLING_PRICE_LIST;
 
 create
-    definer = tuidiadmin@`%` procedure crai.UPDATE_SELLING_PRICE_LIST()
+    definer = tuidiadmin@`%` procedure soplaya.UPDATE_SELLING_PRICE_LIST()
 begin
 
     /*
     CREO TEMPORANEA CHE METTE INSIEME I RECORD DEGLI SCHEMA DI STAGING:
-    crai
-    crai2
+    soplaya
+    soplaya2
 
      */
-    drop temporary table if exists t_craicommon.selling_price_list_header_full;
-    create temporary table t_craicommon.selling_price_list_header_full
+    drop temporary table if exists t_soplaya.selling_price_list_header_full;
+    create temporary table t_soplaya.selling_price_list_header_full
     select selling_price_list_header_code, description, insert_date, update_date, to_be_deleted
-    from t_crai.selling_price_list
+    from t_soplaya.selling_price_list
 #     union
 #     select selling_price_list_header_code, description, insert_date, update_date, to_be_deleted
-#     from t_crai2.selling_price_list_header
+#     from t_soplaya2.selling_price_list_header
     ;
 
 
-    drop temporary table if exists t_craicommon.selling_price_list_row_full;
-    create temporary table t_craicommon.selling_price_list_row_full
+    drop temporary table if exists t_soplaya.selling_price_list_row_full;
+    create temporary table t_soplaya.selling_price_list_row_full
     select selling_price_list_row_code,
            selling_price_list_header_code,
            price,
@@ -37,7 +37,7 @@ begin
            insert_date,
            update_date,
            to_be_deleted
-    from t_crai.selling_price_list
+    from t_soplaya.selling_price_list
 #     union
 #     select selling_price_list_row_code,
 #            selling_price_list_header_code,
@@ -54,14 +54,14 @@ begin
 #            insert_date,
 #            update_date,
 #            to_be_deleted
-#     from t_crai2.selling_price_list
+#     from t_soplaya2.selling_price_list
     ;
 
 
-    insert into crai.selling_price_list_header (selling_price_list_header_code, description)
+    insert into soplaya.selling_price_list_header (selling_price_list_header_code, description)
 -- Inserire tutti i campi della tabella
     select new.selling_price_list_header_code, new.description
-    from t_craicommon.selling_price_list_header_full new
+    from t_soplaya.selling_price_list_header_full new
     -- Inserire solo i campi variabili della tabella
     on duplicate key update description=new.description;
 
@@ -74,8 +74,8 @@ Cancello tutti i record senza una nuova istanza
  */
 
     delete old
-    from crai.selling_price_list_row old
-             join t_craicommon.selling_price_list_row_full new
+    from soplaya.selling_price_list_row old
+             join t_soplaya.selling_price_list_row_full new
                   on old.selling_price_list_row_code = new.selling_price_list_row_code
     where new.to_be_deleted = 1;
 
@@ -84,7 +84,7 @@ Inserisco le nuove istanze dei record esistenti
  */
 
 
-    insert into crai.selling_price_list_row (selling_price_list_row_code,
+    insert into soplaya.selling_price_list_row (selling_price_list_row_code,
                                                 selling_price_list_header_id,
                                                 product_id,
                                                 price,
@@ -110,10 +110,10 @@ Inserisco le nuove istanze dei record esistenti
                  splr.description,
                  splr.selling_price_list_row_code,
                  splr.flg_active
-          from t_craicommon.selling_price_list_row_full splr
-                   INNER JOIN crai.product p
+          from t_soplaya.selling_price_list_row_full splr
+                   INNER JOIN soplaya.product p
                               on splr.product_code = p.product_code
-                   inner join crai.selling_price_list_header splh
+                   inner join soplaya.selling_price_list_header splh
                               on splh.selling_price_list_header_code = splr.selling_price_list_header_code
           where splr.to_be_deleted = 0) new
 
@@ -128,10 +128,10 @@ Inserisco le nuove istanze dei record esistenti
                             flg_active                   = new.flg_active;
 
         -- Aggiorniamo il FLG_ACTIVE sulle righe non aggiornate
-    update crai.selling_price_list_row splr
+    update soplaya.selling_price_list_row splr
     set splr.flg_active = 1
     where current_date between splr.start_date and splr.end_date;
-    update crai.selling_price_list_row splr
+    update soplaya.selling_price_list_row splr
     set splr.flg_active = 0
     where current_date not between splr.start_date and splr.end_date;
 

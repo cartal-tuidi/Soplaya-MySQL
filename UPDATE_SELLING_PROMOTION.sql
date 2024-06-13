@@ -1,17 +1,17 @@
-drop procedure if exists crai.UPDATE_SELLING_PROMOTION;
+drop procedure if exists soplaya.UPDATE_SELLING_PROMOTION;
 
 create
-    definer = tuidiadmin@`%` procedure crai.UPDATE_SELLING_PROMOTION()
+    definer = tuidiadmin@`%` procedure soplaya.UPDATE_SELLING_PROMOTION()
 begin
 
     /*
     CREO TEMPORANEA CHE METTE INSIEME I RECORD DEGLI SCHEMA DI STAGING:
-    crai
-    crai2
+    soplaya
+    soplaya2
 
      */
-    drop temporary table if exists t_craicommon.selling_promotion_header_full;
-    create temporary table t_craicommon.selling_promotion_header_full
+    drop temporary table if exists t_soplaya.selling_promotion_header_full;
+    create temporary table t_soplaya.selling_promotion_header_full
     select promotion_code,
            min_promotion_start_date,
            max_promotion_end_date,
@@ -21,7 +21,7 @@ begin
            insert_date,
            update_date,
            to_be_deleted
-    from t_crai.selling_promotion
+    from t_soplaya.selling_promotion
     #     union
 #     select promotion_code,
 #            min_promotion_start_date,
@@ -31,12 +31,12 @@ begin
 #            insert_date,
 #            update_date,
 #            to_be_deleted
-#     from t_crai2.selling_promotion
+#     from t_soplaya2.selling_promotion
     ;
 
 
-    drop temporary table if exists t_craicommon.selling_promotion_row_full;
-    create temporary table t_craicommon.selling_promotion_row_full
+    drop temporary table if exists t_soplaya.selling_promotion_row_full;
+    create temporary table t_soplaya.selling_promotion_row_full
     select promotion_code,
            product_code,
            promotion_price,
@@ -53,7 +53,7 @@ begin
            insert_date,
            update_date,
            to_be_deleted
-    from t_crai.selling_promotion
+    from t_soplaya.selling_promotion
     #     union
 #     select promotion_code,
 #            product_code,
@@ -69,7 +69,7 @@ begin
 #            insert_date,
 #            update_date,
 #            to_be_deleted
-#     from t_crai2.selling_promotion
+#     from t_soplaya2.selling_promotion
     ;
 
 
@@ -82,20 +82,20 @@ Cancello tutti i record senza una nuova istanza
  */
 
 #     delete old
-#     from crai.selling_promotion_header old
-#              join t_craicommon.selling_promotion_header_full new on new.promotion_code = old.promotion_code
+#     from soplaya.selling_promotion_header old
+#              join t_soplaya.selling_promotion_header_full new on new.promotion_code = old.promotion_code
 #     where new.to_be_deleted = 1;
 
 /*
 Inserisco le nuove istanze dei record esistenti
  */
-    insert into crai.selling_promotion_header (promotion_code, promotion_start_date, promotion_end_date, description)
+    insert into soplaya.selling_promotion_header (promotion_code, promotion_start_date, promotion_end_date, description)
 -- Inserire tutti i campi della tabella
     select distinct new.promotion_code,
                     new.min_promotion_start_date,
                     new.max_promotion_end_date,
                     new.description
-    from t_craicommon.selling_promotion_header_full new
+    from t_soplaya.selling_promotion_header_full new
     where to_be_deleted = 0
     -- Inserire solo i campi variabili della tabella
     on duplicate key update promotion_start_date = new.min_promotion_start_date,
@@ -110,12 +110,12 @@ Inserisco le nuove istanze dei record esistenti
 Cancello tutti i record senza una nuova istanza
  */
     delete old
-    from crai.selling_promotion_row old
+    from soplaya.selling_promotion_row old
              -- cancello solo i record dei listini non trovati durante il caricamento degli ultimi 7 giorni
-             inner join crai.selling_promotion_header h
+             inner join soplaya.selling_promotion_header h
                         on h.id = old.selling_promotion_header_id
-             inner join crai.product p on p.id = old.product_id
-             inner join t_craicommon.selling_promotion_row_full new
+             inner join soplaya.product p on p.id = old.product_id
+             inner join t_soplaya.selling_promotion_row_full new
                         on new.promotion_code = h.promotion_code and new.product_code = p.product_code
     where new.to_be_deleted = 1;
 
@@ -123,7 +123,7 @@ Cancello tutti i record senza una nuova istanza
 /*
 Inserisco le nuove istanze dei record esistenti
  */
-    insert into crai.selling_promotion_row (selling_promotion_header_id,
+    insert into soplaya.selling_promotion_row (selling_promotion_header_id,
                                             product_id,
                                             promotion_price,
                                             promotion_type,
@@ -142,10 +142,10 @@ Inserisco le nuove istanze dei record esistenti
                     new.promo_channel_code as promo_channel_id,
                     new.flg_first_promo,
                     new.flg_active
-    from t_craicommon.selling_promotion_row_full new
-             inner join crai.selling_promotion_header splh
+    from t_soplaya.selling_promotion_row_full new
+             inner join soplaya.selling_promotion_header splh
                         on splh.promotion_code = new.promotion_code
-             inner join crai.product p on p.product_code = new.product_code
+             inner join soplaya.product p on p.product_code = new.product_code
     where new.to_be_deleted = 0
     -- Inserire solo i campi variabili della tabella
     on duplicate key update product_id           = p.id,
@@ -159,10 +159,10 @@ Inserisco le nuove istanze dei record esistenti
 
 
     -- Aggiorniamo il FLG_ACTIVE sulle righe non aggiornate
-    update crai.selling_promotion_row spr
+    update soplaya.selling_promotion_row spr
     set spr.flg_active = 1
     where current_date between spr.promotion_start_date and spr.promotion_end_date;
-    update crai.selling_promotion_row spr
+    update soplaya.selling_promotion_row spr
     set spr.flg_active = 0
     where current_date not between spr.promotion_start_date and spr.promotion_end_date;
 

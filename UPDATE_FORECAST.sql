@@ -1,17 +1,17 @@
-drop procedure if exists crai.UPDATE_FORECAST;
+drop procedure if exists soplaya.UPDATE_FORECAST;
 
 create
-    definer = tuidiadmin@`%` procedure crai.UPDATE_FORECAST()
+    definer = tuidiadmin@`%` procedure soplaya.UPDATE_FORECAST()
 begin
 
 
-    drop temporary table if exists t_craicommon.forecast_full;
-    create temporary table t_craicommon.forecast_full
+    drop temporary table if exists t_soplaya.forecast_full;
+    create temporary table t_soplaya.forecast_full
     select avg, std_dev, art_code, store_code, reg_date, forecast_date, forecast
-    from t_crai.forecast
+    from t_soplaya.forecast
     #     union
 #     select avg, std_dev, art_code, store_code, reg_date, forecast_date, forecast
-#     from t_crai2.forecast
+#     from t_soplaya2.forecast
     ;
 
     /*
@@ -19,14 +19,14 @@ begin
     */
 
     delete
-    from crai.forecast f
+    from soplaya.forecast f
     where f.reg_date < current_date;
 
     /*
     inserisco nuovi record
     */
 
-    insert into crai.forecast(avg, std_dev, product_id, reg_date, forecast_date, forecast)
+    insert into soplaya.forecast(avg, std_dev, product_id, reg_date, forecast_date, forecast)
     select new.avg
          , new.std_dev
          , new.product_id
@@ -39,12 +39,12 @@ begin
                  f.reg_date            as reg_date,
                  f.forecast_date       as forecast_date,
                  ifnull(f.forecast, 0) as forecast
-          from t_craicommon.forecast_full f
-                   inner join crai.art_registry art
+          from t_soplaya.forecast_full f
+                   inner join soplaya.art_registry art
                               on art.art_code = f.art_code
-                   inner join crai.store_registry s
+                   inner join soplaya.store_registry s
                               on s.store_code = f.store_code
-                   inner join crai.product p
+                   inner join soplaya.product p
                               on art.id = p.art_registry_id
                                   and s.id = p.store_registry_id) new
     on duplicate key update avg           = new.avg,

@@ -1,17 +1,17 @@
-drop procedure if exists crai.UPDATE_SALES_RECORD;
+drop procedure if exists soplaya.UPDATE_SALES_RECORD;
 
 create
-    definer = tuidiadmin@`%` procedure crai.UPDATE_SALES_RECORD()
+    definer = tuidiadmin@`%` procedure soplaya.UPDATE_SALES_RECORD()
 begin
 
     /*
     CREO TEMPORANEA CHE METTE INSIEME I RECORD DEGLI SCHEMA DI STAGING:
-    crai
-    crai2
+    soplaya
+    soplaya2
 
      */
-    drop temporary table if exists t_craicommon.sales_record_full;
-    create temporary table t_craicommon.sales_record_full
+    drop temporary table if exists t_soplaya.sales_record_full;
+    create temporary table t_soplaya.sales_record_full
     select product_code,
            quantity_sold,
            amount,
@@ -24,7 +24,7 @@ begin
            insert_date,
            update_date,
            to_be_deleted
-    from t_crai.sales_record
+    from t_soplaya.sales_record
     #     union
 #     select product_code,
 #            quantity_sold,
@@ -38,7 +38,7 @@ begin
 #            insert_date,
 #            update_date,
 #            to_be_deleted
-#     from t_crai2.sales_record
+#     from t_soplaya2.sales_record
     ;
 
     -- #########################################################################################
@@ -47,16 +47,16 @@ Cancello tutti i record senza una nuova istanza negli ultimi 7 giorni
  */
     /*
     delete old
-    from crai.sales_record old
-        join crai.product p on old.product_id = p.id
-    join t_craicommon.sales_record_full new on new.product_code=p.product_code and old.reg_date=new.reg_date;
+    from soplaya.sales_record old
+        join soplaya.product p on old.product_id = p.id
+    join t_soplaya.sales_record_full new on new.product_code=p.product_code and old.reg_date=new.reg_date;
 
 
     -- #########################################################################################
 /*
 Inserisco le nuove istanze dei record esistenti
  */
-    insert into crai.sales_record (product_id, quantity_sold, amount, reg_date, reg_last_time, discount, flg_promo)
+    insert into soplaya.sales_record (product_id, quantity_sold, amount, reg_date, reg_last_time, discount, flg_promo)
 -- Inserire tutti i campi della tabella
     select p.id,
            new.quantity_sold,
@@ -65,8 +65,8 @@ Inserisco le nuove istanze dei record esistenti
            new.reg_last_time,
            new.discount,
            new.flg_promo
-    from t_craicommon.sales_record_full new
-             inner join crai.product p
+    from t_soplaya.sales_record_full new
+             inner join soplaya.product p
                         on p.product_code = new.product_code
     -- Inserire solo i campi variabili della tabella
     on duplicate key update quantity_sold=new.quantity_sold,
@@ -80,10 +80,10 @@ Inserisco le nuove istanze dei record esistenti
 -- ##################################################################
 
     delete
-    from crai.sales_record_filtered
+    from soplaya.sales_record_filtered
     where reg_date < date_add(now(), interval -2 month);
 
-    insert into crai.sales_record_filtered (amount, discount, product_id, reg_date, reg_last_time, quantity_sold,
+    insert into soplaya.sales_record_filtered (amount, discount, product_id, reg_date, reg_last_time, quantity_sold,
                                             flg_promo,
                                             insert_date, update_date)
     select amount,
@@ -95,7 +95,7 @@ Inserisco le nuove istanze dei record esistenti
            flg_promo,
            insert_date,
            update_date
-    from crai.sales_record sr
+    from soplaya.sales_record sr
     where reg_date >= date_add(now(), interval -2 month)
     on duplicate key update amount        = sr.amount,
                             discount      = sr.discount,

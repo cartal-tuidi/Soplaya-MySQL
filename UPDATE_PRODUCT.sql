@@ -1,17 +1,17 @@
-drop procedure if exists crai.UPDATE_PRODUCT;
+drop procedure if exists soplaya.UPDATE_PRODUCT;
 
 create
-    definer = tuidiadmin@`%` procedure crai.UPDATE_PRODUCT()
+    definer = tuidiadmin@`%` procedure soplaya.UPDATE_PRODUCT()
 begin
 
     /*
     CREO TEMPORANEA CHE METTE INSIEME I RECORD DEGLI SCHEMA DI STAGING:
-    crai
-    crai2
+    soplaya
+    soplaya2
 
      */
-    drop temporary table if exists t_craicommon.product_full;
-    create temporary table t_craicommon.product_full
+    drop temporary table if exists t_soplaya.product_full;
+    create temporary table t_soplaya.product_full
     select product_code,
            art_code,
            store_code,
@@ -21,7 +21,7 @@ begin
            insert_date,
            update_date,
            flg_active
-    from t_crai.product
+    from t_soplaya.product
 #     union
 #     select product_code,
 #            art_code,
@@ -36,7 +36,7 @@ begin
 #            classe,
 #            classe_default,
 #            flg_active
-#     from t_crai2.product
+#     from t_soplaya2.product
     ;
     -- #########################################################################################
 /*
@@ -46,8 +46,8 @@ Disattiviamo tutti i record senza una nuova istanza
 -- 1) li disattiviamo con FLG_ACTIVE = 0
 -- 2) aggiorniamo il FLG_IN_STOCK = 0 per segnarli come fuori assortimento
 -- 3) cancello la ACTIVATION_DATE per poter tracciare l'eventuale riattivazione futura
-    UPDATE crai.product old
-        JOIN t_craicommon.product_full new
+    UPDATE soplaya.product old
+        JOIN t_soplaya.product_full new
         ON old.product_code = new.product_code
     SET old.flg_active      = 0,
         old.flg_in_stock    = 0,
@@ -58,7 +58,7 @@ Disattiviamo tutti i record senza una nuova istanza
 /*
 Inserisco le nuove istanze dei record esistenti
  */
-    insert into crai.product ( product_code
+    insert into soplaya.product ( product_code
                                 , art_registry_id
                                 , store_registry_id
                                 , shelf_qty
@@ -71,7 +71,7 @@ Inserisco le nuove istanze dei record esistenti
          , new.shelf_qty
          , new.flg_in_stock
          , new.flg_active
-    from t_craicommon.product_full new
+    from t_soplaya.product_full new
              inner join art_registry ar on new.art_code = ar.art_code
              inner join store_registry sr on new.store_code = sr.store_code
     -- Inserire solo i campi variabili della tabella
