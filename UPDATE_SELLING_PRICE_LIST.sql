@@ -4,64 +4,10 @@ create
     definer = tuidiadmin@`%` procedure soplaya.UPDATE_SELLING_PRICE_LIST()
 begin
 
-    /*
-    CREO TEMPORANEA CHE METTE INSIEME I RECORD DEGLI SCHEMA DI STAGING:
-    soplaya
-    soplaya2
-
-     */
-    drop temporary table if exists t_soplaya.selling_price_list_header_full;
-    create temporary table t_soplaya.selling_price_list_header_full
-    select selling_price_list_header_code, description, insert_date, update_date, to_be_deleted
-    from t_soplaya.selling_price_list
-#     union
-#     select selling_price_list_header_code, description, insert_date, update_date, to_be_deleted
-#     from t_soplaya2.selling_price_list_header
-    ;
-
-
-    drop temporary table if exists t_soplaya.selling_price_list_row_full;
-    create temporary table t_soplaya.selling_price_list_row_full
-    select selling_price_list_row_code,
-           selling_price_list_header_code,
-           price,
-           start_date,
-           end_date,
-           art_code,
-           store_code,
-           product_code,
-           out_of_stock,
-           description,
-           original_end_date,
-           flg_active,
-           insert_date,
-           update_date,
-           to_be_deleted
-    from t_soplaya.selling_price_list
-#     union
-#     select selling_price_list_row_code,
-#            selling_price_list_header_code,
-#            price,
-#            start_date,
-#            end_date,
-#            art_code,
-#            store_code,
-#            product_code,
-#            out_of_stock,
-#            description,
-#            original_end_date,
-#            flg_active,
-#            insert_date,
-#            update_date,
-#            to_be_deleted
-#     from t_soplaya2.selling_price_list
-    ;
-
-
     insert into soplaya.selling_price_list_header (selling_price_list_header_code, description)
 -- Inserire tutti i campi della tabella
-    select new.selling_price_list_header_code, new.description
-    from t_soplaya.selling_price_list_header_full new
+    select distinct  new.selling_price_list_header_code, new.description
+    from t_soplaya.selling_price_list new
     -- Inserire solo i campi variabili della tabella
     on duplicate key update description=new.description;
 
@@ -75,7 +21,7 @@ Cancello tutti i record senza una nuova istanza
 
     delete old
     from soplaya.selling_price_list_row old
-             join t_soplaya.selling_price_list_row_full new
+             join t_soplaya.selling_price_list new
                   on old.selling_price_list_row_code = new.selling_price_list_row_code
     where new.to_be_deleted = 1;
 
@@ -110,7 +56,7 @@ Inserisco le nuove istanze dei record esistenti
                  splr.description,
                  splr.selling_price_list_row_code,
                  splr.flg_active
-          from t_soplaya.selling_price_list_row_full splr
+          from t_soplaya.selling_price_list splr
                    INNER JOIN soplaya.product p
                               on splr.product_code = p.product_code
                    inner join soplaya.selling_price_list_header splh

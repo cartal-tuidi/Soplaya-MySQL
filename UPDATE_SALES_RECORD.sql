@@ -24,7 +24,7 @@ begin
            insert_date,
            update_date,
            to_be_deleted
-    from t_soplaya.sales_record
+    from t_soplaya.sales_record_aggr
     #     union
 #     select product_code,
 #            quantity_sold,
@@ -65,7 +65,8 @@ Inserisco le nuove istanze dei record esistenti
            new.reg_last_time,
            new.discount,
            new.flg_promo
-    from t_soplaya.sales_record_full new
+    from t_soplaya.sales_record_aggr
+        new
              inner join soplaya.product p
                         on p.product_code = new.product_code
     -- Inserire solo i campi variabili della tabella

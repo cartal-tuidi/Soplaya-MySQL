@@ -5,73 +5,6 @@ create
 begin
 
 
-    /*
-    CREO TEMPORANEA CHE METTE INSIEME I RECORD DEGLI SCHEMA DI STAGING:
-    soplaya
-    soplaya2
-
-     */
-    drop temporary table if exists t_soplaya.purchase_price_list_header_full;
-    create temporary table t_soplaya.purchase_price_list_header_full
-    select purchase_price_list_header_code, supplier_code, description, insert_date, update_date, to_be_deleted
-    from t_soplaya.purchase_price_list
-    #     union
-#     select purchase_price_list_header_code, supplier_code, description, insert_date, update_date, to_be_deleted
-#     from t_soplaya2.purchase_price_list
-    ;
-
-
-    drop temporary table if exists t_soplaya.purchase_price_list_row_full;
-    create temporary table t_soplaya.purchase_price_list_row_full
-    select purchase_price_list_row_code,
-           price,
-           purchase_price_list_header_code,
-           start_date,
-           end_date,
-           art_code,
-           flg_active,
-           store_code,
-           product_code,
-           out_of_stock,
-           description,
-           insert_date,
-           update_date,
-           to_be_deleted
-    from t_soplaya.purchase_price_list
-    #     union
-#     select purchase_price_list_row_code,
-#            price,
-#            purchase_price_list_header_code,
-#            start_date,
-#            end_date,
-#            art_code,
-#            flg_active,
-#            store_code,
-#            product_code,
-#            out_of_stock,
-#            description,
-#            insert_date,
-#            update_date,
-#            to_be_deleted
-#     from t_soplaya2.purchase_price_list
-    ;
-
-    -- #################################################################################
-    -- purchase_price_list_header
-    -- #################################################################################
-/*
-Cancello tutti i record senza una nuova istanza
- */
-#     delete
-#     from soplaya.purchase_price_list_header old
-#     where old.purchase_price_list_header_code not in
-#           (select new.purchase_price_list_header_code
-#            from t_soplaya.purchase_price_list_header_full new);
-
-/*
-Inserisco le nuove istanze dei record esistenti
- */
-
     insert into soplaya.purchase_price_list_header (purchase_price_list_header_code,
                                                  supplier_registry_id,
                                                  description)
@@ -79,7 +12,7 @@ Inserisco le nuove istanze dei record esistenti
     select new.purchase_price_list_header_code,
            sr.id,
            new.description
-    from t_soplaya.purchase_price_list_header_full new
+    from t_soplaya.purchase_price_list new
              inner join soplaya.supplier_registry sr on new.supplier_code = sr.supplier_code
     -- Inserire solo i campi variabili della tabella
     on duplicate key update supplier_registry_id = sr.id,
@@ -94,7 +27,7 @@ Cancello tutti i record senza una nuova istanza
  */
     delete old
     from soplaya.purchase_price_list_row old
-             join t_soplaya.purchase_price_list_row_full new
+             join t_soplaya.purchase_price_list new
                   on new.purchase_price_list_row_code = old.purchase_price_list_row_code
     where new.to_be_deleted = 1;
 
@@ -118,7 +51,7 @@ Inserisco le nuove istanze dei record esistenti
            new.end_date,
            new.out_of_stock,
            new.flg_active
-    from t_soplaya.purchase_price_list_row_full new
+    from t_soplaya.purchase_price_list new
              INNER JOIN soplaya.product p
                         on new.product_code = p.product_code
              inner join soplaya.purchase_price_list_header pplh
