@@ -24,16 +24,20 @@ begin
                           , anomaly_weight   = i.anomaly_weight
                           , seasonal_coef    = i.seasonal_coef;
 
+############ SALES_ANOMALIES  ##################
 
-
-############ ANOMALIES TO PUSH  ##################
-
-    insert into soplaya.anomalies_to_push (product_id, client_id, reg_date, qty, to_ignore, is_tuidi)
+    insert into soplaya.sales_anomaly(product_id, qty,
+                                      reg_date,
+                                      sales_anomaly_code,
+                                      to_ignore,
+                                      client_registry_id,
+                                      is_tuidi)
     select p.id
-         , c.id
-         , i.reg_date
          , i.qty
+         , i.reg_date
+         , concat(ar.art_code,'-',i.store_code,'-',c.client_code,'-',reg_date) as sales_anomaly_code
          , i.to_ignore
+         , c.id
          , i.is_tuidi
     from product p
              inner join art_registry ar on p.art_registry_id = ar.id
@@ -45,5 +49,5 @@ begin
                           , to_ignore = i.to_ignore
                           , is_tuidi  = i.is_tuidi;
 
-END;
+END
 
