@@ -49,7 +49,7 @@ begin
                    inner join soplaya.product p
                               on art.id = p.art_registry_id
                                   and s.id = p.store_registry_id) new
-    on duplicate key update avg           = new.avg,
+    on duplicate key update avg           = new.forecast,
                             std_dev       = new.std_dev,
                             forecast_date = new.forecast_date,
                             forecast      = new.forecast,
