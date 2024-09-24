@@ -53,7 +53,8 @@ Inserisco le nuove istanze dei record esistenti
                           , weight            = psr.weight
                           , pack_layer        = psr.pack_layer
                           , pack_pallet       = psr.pack_pallet
-                          , pack_qty          = psr.pack_qty;
+                          , pack_qty          = psr.pack_qty
+                          , flg_active        = psr.flg_active;
     -- Inserire solo i campi variabili della tabella
 
 END;
