@@ -82,7 +82,7 @@ Inserisco le nuove istanze dei record esistenti
 
     delete
     from soplaya.sales_record_filtered
-    where reg_date < date_add(now(), interval -2 month);
+    where reg_date < date_add(now(), interval -4 month);
 
     insert into soplaya.sales_record_filtered (amount, discount, product_id, reg_date, reg_last_time, quantity_sold,
                                             flg_promo,
