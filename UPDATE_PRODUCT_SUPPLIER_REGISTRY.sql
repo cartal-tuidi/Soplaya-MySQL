@@ -6,12 +6,12 @@ begin
 
 
     /*
-    Cancello tutti i record flaggati come da cancellare nel caricamento di oggi
+    disattivo tutti i record flaggati come da cancellare nel caricamento di oggi
      */
-    delete old
-    from soplaya.product_supplier_registry old
+    update soplaya.product_supplier_registry old
              inner join t_soplaya.product_supplier_registry new
                         on new.product_supplier_code = old.product_supplier_code
+    set old.flg_active = 0
     where new.to_be_deleted = 1;
 
     -- #########################################################################################
